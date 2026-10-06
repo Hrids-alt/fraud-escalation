@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dataset
+data/raw/*.csv
+data/raw/*.zip
+data/raw/*.7z
+data/raw/*.rar
+
+# Generated results
+results/*.csv
+results/*.json
+results/*.pkl
+results/*.joblib
+
+# Streamlit
+.streamlit/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Python cache
+.pytest_cache/
+
+# Environment / secrets
+.env
