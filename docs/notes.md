@@ -158,7 +158,15 @@ Implement probability calibration and the cost-aware selective-escalation cascad
 
 **Results:** Adding aggregated graph features improved pooled F1 and PR-AUC for both model families. Logistic Regression F1 increased from 0.242 (LOCAL) to 0.303 (ALL), while Random Forest F1 increased from 0.798 to 0.816. Random Forest with ALL features achieved the strongest overall result: precision 0.988, recall 0.696, F1 0.816, and PR-AUC 0.796.
 
-**Temporal variation:** ALL features had higher per-step F1 in 8 of 15 test steps for Random Forest and 13 of 15 for Logistic Regression. Pooled F1 and the unweighted mean of per-step F1 are different summaries, so improvements in pooled F1 do not require winning most individual steps.
+Temporal variation: For Random Forest, per-step F1 is high on steps 35-42 for both
+feature sets (mean 0.88) and falls to near zero from step 43 onward (0.07 LOCAL,
+0.09 ALL). Illicit recall is 0.83 (LOCAL) and 0.82 (ALL) on steps 35-42 and 0.02
+on steps 43-49 (about 3 of 169 illicit transactions). ALL had higher per-step F1 in
+8 of 15 steps (3 lower, 4 tied at zero); the mean per-step gain of +0.012 falls to
++0.004 when steps 45-46 (fewer than 10 illicit rows) are excluded, so the pooled RF
+gain comes mainly from higher precision. For Logistic Regression, ALL was higher in
+13 of 15 steps, with the largest gains in steps 47-49. No cause for these changes
+is established.
 
 **Limitations:** Test steps 45 and 46 contain fewer than 10 illicit examples each, making per-step metrics less stable. The observed changes describe temporal performance variation; they do not establish its cause.
 
