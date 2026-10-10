@@ -1,0 +1,5 @@
+﻿model,feature_set,n_features,precision,recall,f1,pr_auc
+Logistic Regression,Local,93,0.141,0.861,0.242,0.252
+Logistic Regression,All,165,0.183,0.879,0.303,0.291
+Random Forest,Local,93,0.926,0.701,0.798,0.785
+Random Forest,All,165,0.988,0.696,0.816,0.796
