@@ -138,3 +138,28 @@ Accuracy is not used as the headline metric because a model can predict nearly e
 
 ### Next stage
 Implement probability calibration and the cost-aware selective-escalation cascade. Keep test steps 35–49 out of calibration, threshold selection, and model selection.
+
+### E1: Local vs All Feature Comparison
+
+**Experiment:** Models trained on labelled transactions from time steps 1–34 and evaluated on steps 35–49. Logistic Regression uses seed 42; Random Forest reports the mean over seeds 42, 43, and 44. The decision threshold is 0.5.
+
+| Model | Feature set | Precision | Recall | F1 | PR-AUC |
+|---|---|---:|---:|---:|---:|
+| Logistic Regression | Local (93 features) | 0.141 | 0.861 | 0.242 | 0.252 |
+| Logistic Regression | All (165 features) | 0.183 | 0.879 | 0.303 | 0.291 |
+| Random Forest | Local (93 features) | 0.926 | 0.701 | 0.798 | 0.785 |
+| Random Forest | All (165 features) | 0.988 | 0.696 | 0.816 | 0.796 |
+
+**Interpretation:** Adding aggregated features improved F1 and PR-AUC for both model families in this experiment. Random Forest outperformed Logistic Regression on F1 and PR-AUC for both feature sets. However, Random Forest recall decreased slightly when aggregated features were added, from 0.701 to 0.696. These findings describe this test set and do not establish that aggregated features will always improve performance.
+
+### E2 — Per-time-step drift analysis
+
+**Setup:** Models trained on labelled transactions from time steps 1–34 and evaluated on test steps 35–49 using a fixed threshold of 0.5. Random Forest results are averaged over seeds 42–44; Logistic Regression uses seed 42. No test-set tuning was performed.
+
+**Results:** Adding aggregated graph features improved pooled F1 and PR-AUC for both model families. Logistic Regression F1 increased from 0.242 (LOCAL) to 0.303 (ALL), while Random Forest F1 increased from 0.798 to 0.816. Random Forest with ALL features achieved the strongest overall result: precision 0.988, recall 0.696, F1 0.816, and PR-AUC 0.796.
+
+**Temporal variation:** ALL features had higher per-step F1 in 8 of 15 test steps for Random Forest and 13 of 15 for Logistic Regression. Pooled F1 and the unweighted mean of per-step F1 are different summaries, so improvements in pooled F1 do not require winning most individual steps.
+
+**Limitations:** Test steps 45 and 46 contain fewer than 10 illicit examples each, making per-step metrics less stable. The observed changes describe temporal performance variation; they do not establish its cause.
+
+**Artifacts:** `results/e2_per_step.csv`, `results/e2_overall.csv`, `results/figures/e2_drift_rf.png`, and `results/figures/e2_drift_lr.png`.
