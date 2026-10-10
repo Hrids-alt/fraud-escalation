@@ -90,3 +90,51 @@
 
 ### Next stage
 Implement calibration and the cost-aware selective-escalation cascade according to `SPEC.md`. Keep the chronological splits fixed and do not use test results for model selection or threshold tuning.
+
+## Day 4: RQ1 Feature Comparison and Random Forest
+
+### Experiment setup
+- Compared Logistic Regression (LR) and Random Forest (RF) using LOCAL and ALL feature sets.
+- LOCAL contains 93 local features.
+- ALL contains 165 features: local and aggregated features.
+- Excluded `txId`, `time_step`, and `label` from model features.
+- Trained standalone RQ1 models on labelled transactions from time steps 1–34.
+- Evaluated on labelled transactions from time steps 35–49.
+- LR used seed 42; RF results were averaged across seeds 42, 43, and 44.
+- Used `class_weight="balanced"` for both model families. LR also used feature scaling.
+
+### E1: Local vs All features
+
+| Model | Features | Precision | Recall | F1 | PR-AUC |
+|---|---|---:|---:|---:|---:|
+| LR | Local | 0.141 | 0.861 | 0.242 | 0.252 |
+| LR | All | 0.183 | 0.879 | 0.303 | 0.291 |
+| RF | Local | 0.926 | 0.701 | 0.798 | 0.785 |
+| RF | All | 0.988 | 0.696 | 0.816 | 0.796 |
+
+### Findings
+- Adding aggregated features improved F1 and PR-AUC for both model families in this experiment.
+- RF achieved stronger F1 and PR-AUC than LR on both feature sets.
+- RF recall decreased slightly from 0.701 to 0.696 when moving from LOCAL to ALL features; improvements were not uniform across every metric.
+- These are test-set observations, not proof that aggregated features will always improve performance.
+
+### Random Forest: short theory
+Random Forest is an ensemble learning algorithm that combines many decision trees. Each tree is trained using randomized samples of the training data and considers randomized subsets of features when choosing splits. Their outputs are aggregated to produce the final prediction or probability.
+
+Advantages:
+- Learns nonlinear relationships and feature interactions.
+- Combines many trees, often reducing the instability of an individual tree.
+- Can model complex patterns without requiring feature scaling.
+
+In this project, `class_weight="balanced"` helps account for the imbalance between illicit and licit transactions. It does not guarantee high illicit recall or eliminate false positives.
+
+### Interpretation of evaluation metrics
+- Precision: proportion of predicted illicit transactions that are actually illicit.
+- Recall: proportion of actual illicit transactions detected.
+- F1: harmonic mean of precision and recall.
+- PR-AUC: average precision, summarizing precision-recall ranking performance across thresholds.
+
+Accuracy is not used as the headline metric because a model can predict nearly everything as licit and still achieve high accuracy while detecting no illicit transactions.
+
+### Next stage
+Implement probability calibration and the cost-aware selective-escalation cascade. Keep test steps 35–49 out of calibration, threshold selection, and model selection.
