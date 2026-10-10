@@ -56,3 +56,37 @@
 - Compare logistic regression and random forest on local features before repeating the comparison with all features.
 - Run the everything-licit and shuffled-training-label sanity checks.
 - Inspect performance by time step rather than assuming performance declines.
+## Days 3–4: Standalone model baselines
+
+### Work completed
+- Implemented `src/models.py` with Logistic Regression and Random Forest.
+- Implemented `run_baselines.py` for standalone RQ1 comparisons.
+- Added `tests/test_models.py`.
+- Compared local-only features (93 columns) against all features (165 columns).
+- Trained on labelled transactions from time steps 1–34 and evaluated on steps 35–49.
+- Used `class_weight="balanced"` for both model families. Logistic Regression uses feature scaling.
+- Ran the complete test suite: **43 tests passed**.
+
+### Baseline results
+
+| Model | Features | Precision | Recall | F1 | PR-AUC |
+|---|---|---:|---:|---:|---:|
+| Logistic Regression | Local | 0.141 | 0.861 | 0.242 | 0.252 |
+| Logistic Regression | All | 0.183 | 0.879 | 0.303 | 0.291 |
+| Random Forest | Local | 0.926 | 0.701 | 0.798 | 0.785 |
+| Random Forest | All | 0.988 | 0.696 | 0.816 | 0.796 |
+
+### Initial observations
+- All features improved F1 and PR-AUC for both model families in this experiment.
+- Random Forest achieved stronger overall baseline metrics than Logistic Regression.
+- The everything-licit baseline achieved 93.5% accuracy but zero illicit recall, demonstrating why accuracy is unsuitable as the headline metric.
+- Shuffled-label PR-AUC was 0.072 for Logistic Regression and 0.087 for Random Forest, compared with test illicit prevalence of approximately 0.065. These are diagnostic results and do not independently prove the absence of leakage.
+
+### Generated outputs
+- `results/baselines_local.csv`
+- `results/baselines_per_step_local.csv`
+- `results/baselines_all.csv`
+- `results/baselines_per_step_all.csv`
+
+### Next stage
+Implement calibration and the cost-aware selective-escalation cascade according to `SPEC.md`. Keep the chronological splits fixed and do not use test results for model selection or threshold tuning.
