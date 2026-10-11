@@ -38,3 +38,7 @@ Thumbs.db
 
 # Environment / secrets
 .env
+
+
+# Generated model artifacts
+artifacts/

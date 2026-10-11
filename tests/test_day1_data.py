@@ -116,7 +116,6 @@ def test_toy_cross_step_edge_is_detected(tmp_path):
     assert report["n_cross_step"] == 1
     assert report["n_missing_endpoint"] == 0
 
-
 def test_toy_within_step_edges_report_zero_cross(tmp_path):
     _write_toy(tmp_path)
     ds = ld.build_dataset(tmp_path)
@@ -136,7 +135,7 @@ def real():
     ed = ld.load_edges(DATA_DIR)
     return ds, ed
 
-
+@pytest.mark.slow
 def test_real_shapes_and_counts(real):
     ds, ed = real
     summary = ld.dataset_summary(ds, ed)
@@ -151,7 +150,7 @@ def test_real_shapes_and_counts(real):
     assert summary["n_agg_features"] == ld.N_AGG
     assert (summary["time_step_min"], summary["time_step_max"]) == (1, 49)
 
-
+@pytest.mark.slow
 def test_real_class_counts_and_direction(real):
     ds, _ = real
     n_ill = int((ds["label"] == 1).sum())
@@ -165,7 +164,7 @@ def test_real_class_counts_and_direction(real):
     # Illicit must be the minority class; if not, the 1/2 mapping is swapped.
     assert n_ill < n_lic
 
-
+@pytest.mark.slow
 def test_real_ids_unique_and_no_nans(real):
     ds, _ = real
     assert ds["txId"].is_unique
@@ -173,7 +172,7 @@ def test_real_ids_unique_and_no_nans(real):
     assert not ds[feats].isna().any().any()
     say("txId unique and no missing feature values: OK")
 
-
+@pytest.mark.slow
 def test_real_edges_stay_within_one_time_step(real):
     ds, ed = real
     report = ld.edge_step_report(ds, ed)
@@ -183,7 +182,7 @@ def test_real_edges_stay_within_one_time_step(real):
         "Some edges cross time steps; SPEC Section 3 assumption is false."
     )
 
-
+@pytest.mark.slow
 def test_real_illicit_share_per_time_step(real):
     ds, _ = real
     g = ds.groupby("time_step")["label"].agg(
@@ -237,7 +236,7 @@ def test_real_illicit_share_per_time_step(real):
 
     assert len(g) == 49
 
-
+@pytest.mark.slow
 def test_real_split_point_diagnostic(real):
     """Diagnostic only (no assert): does the local/agg boundary show up?
 

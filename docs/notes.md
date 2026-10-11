@@ -171,3 +171,26 @@ is established.
 **Limitations:** Test steps 45 and 46 contain fewer than 10 illicit examples each, making per-step metrics less stable. The observed changes describe temporal performance variation; they do not establish its cause.
 
 **Artifacts:** `results/e2_per_step.csv`, `results/e2_overall.csv`, `results/figures/e2_drift_rf.png`, and `results/figures/e2_drift_lr.png`.
+
+## Day 6 — Stage 1 probability calibration
+
+Stage 1 was trained using LOCAL features from labelled transactions in time steps 1–28. A sigmoid (Platt) calibrator was fitted using labelled transactions from steps 29–34. The test window, steps 35–49, was not used.
+
+**Why calibration matters:** A classifier's probability scores are not necessarily reliable estimates of the actual probability of illicit activity. Calibration adjusts these scores so that predicted probabilities better align with observed frequencies. This matters for the cascade because its routing decision depends on probability thresholds: poorly calibrated scores can send too many or too few transactions to the more expensive graph-feature Stage 2 model.
+
+**Results:** Random Forest Brier score improved from 0.0180 to 0.0149, while Logistic Regression improved from 0.1571 to 0.1086 on the calibration set. Both models also improved in the two split-half Brier checks. PR-AUC remained effectively unchanged, consistent with sigmoid calibration preserving prediction ranking.
+
+The calibration set's illicit share was 19.63%, versus 10.08% in Stage 1 training. This prevalence difference is important when interpreting the fitted calibrators: calibration performance on steps 29–34 does not guarantee equivalent probability reliability on later time steps.
+
+The standalone illicit-F1 thresholds selected on the calibration set were **d = 0.39 for Random Forest** and **d = 0.50 for Logistic Regression**. These thresholds are reserved for the standalone Stage 1 baseline. The cascade's routing threshold, `t_clear`, must be selected separately to satisfy the prescribed recall-retention constraint.
+
+Reliability plots were generated for both model families. The post-calibration reliability plots use the same steps used to fit the calibrators, so they are in-sample diagnostics; the split-half checks provide additional, though limited, evidence about calibration beyond the fitting subset.
+
+Saved outputs: `results/e3_calibration.csv`, `results/e3_reliability.csv`, `results/figures/e3_reliability_rf.png`, `results/figures/e3_reliability_lr.png`. Frozen model artifacts are stored locally under `artifacts/` and must not be committed.
+
+
+Calibration turns model scores into probabilities that match reality. If it says 0.3, about 30% of those cases should be illicit.
+The router compares p1 to t_clear, so p1 has to mean something.
+The Brier score went from 0.0180 to 0.0149 for RF and from 0.1571 to 0.1086 for LR.
+The “after” plots are in-sample (fitted on steps 29-34), so treat them as diagnostics only.
+LR is still poorly calibrated after sigmoid, so RF is the router. Steps 29-34 are 19.6% illicit and the test steps are 6.5%, so thresholds chosen on 29-34 may not transfer.
