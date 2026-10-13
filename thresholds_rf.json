@@ -1,0 +1,20 @@
+{
+  "family": "rf",
+  "d": 0.39,
+  "d2": 0.26,
+  "t_clear": 0.39,
+  "recall_retention_target": 0.95,
+  "target_met_on_validation": true,
+  "chosen_on_steps": [
+    29,
+    34
+  ],
+  "stage2_validation_trained_on_steps": [
+    1,
+    28
+  ],
+  "d2_rule": "max illicit F1 of Stage 2 on steps 29-34 (validation copy)",
+  "validation_escalation_rate": 0.19522082355451248,
+  "validation_recall_retention": 0.9942857142857142,
+  "n_calib": 4687
+}

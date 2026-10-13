@@ -128,3 +128,5 @@ The router compares p1 to t_clear, so p1 has to mean something.
 The Brier score went from 0.0180 to 0.0149 for RF and from 0.1571 to 0.1086 for LR.
 The “after” plots are in-sample (fitted on steps 29-34), so treat them as diagnostics only.
 LR is still poorly calibrated after sigmoid, so RF is the router. Steps 29-34 are 19.6% illicit and the test steps are 6.5%, so thresholds chosen on 29-34 may not transfer.
+
+**Base-rate / distribution-shift note:** The illicit share differs across the chronological windows: 10.08% in Stage 1 training (steps 1–28), 19.63% in calibration (steps 29–34), and approximately 6.50% in the final test window (steps 35–49). The calibration period is therefore not representative of the test period's class prevalence. Threshold selection and calibration results should be interpreted with this distribution shift in mind. We must report final performance on the untouched test window and avoid claiming that validation performance guarantees test performance.
