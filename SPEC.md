@@ -71,7 +71,8 @@ A pytest test must fail if any training step is later than any validation or tes
 5. FREEZE Stage 1, the calibrator, `d` and `t_clear`.
 6. Train the final Stage 2 (ALL) on steps 1-34.
 7. Evaluate once on steps 35-49.
-
+d is chosen on Day 6 (max illicit F1 on steps 29-34, calibrated Stage 1 probabilities) and frozen with Stage 1.
+On Day 7 only t_clear is chosen, on steps 29-34, with t_clear ≤ d.
 ## 7. Cascade and baselines
 
 Router: `p1 < t_clear` -> licit (cleared, no graph features); otherwise escalate to Stage 2, whose label is final.
@@ -86,6 +87,14 @@ Interpretation: if uncertainty-based routing beats random routing at the same es
 
 Note for the report: the RQ1 local-only model (trained on 1-34) and the RQ2 local-only baseline (frozen Stage 1, trained on 1-28) are different models. Label them clearly in tables.
 
+### Stage 2 decision threshold (`d2`)
+
+- Select `d2` by maximizing illicit-class F1 on calibration steps 29–34, using the validation copy of Stage 2 trained on steps 1–28 with the `ALL` feature set.
+- Use the same threshold-selection rule as Stage 1's `d`: maximize illicit-class F1 on steps 29–34 using the applicable validation predictions.
+- Freeze `d2` after selection. Do not adjust it using test steps 35–49.
+- The recall-retention target is 0.95.
+- The Stage 1 clearing threshold must satisfy `t_clear <= d`, where `d` is already frozen from Day 6. Select `t_clear` on steps 29–34 only, choosing the largest value that achieves recall retention of at least 0.95. If none achieves the target, report the best achieved retention.
+- Do not use test steps 35–49 for threshold selection or retuning.
 ## 8. Metrics
 
 Illicit-class precision, recall, F1; PR-AUC (`average_precision_score`); per-time-step versions; `escalation_rate` = share of transactions with `p1 >= t_clear`; `recall_retention` = recall(cascade) / recall(graph-always).
@@ -158,3 +167,19 @@ fraud-escalation/
 (update after every working module)
 
 - Day 0: dataset download started.
+- Day 1 — Complete:** Implemented `src/load_data.py` with `load_features()`, `load_classes()`, `load_edges()`, and `build_dataset()`. Verified dataset dimensions (203,769 transactions, 234,355 edges, and 167 columns in the raw feature file), class mapping (raw `1` = illicit, raw `2` = licit, `unknown` = unlabelled), and the local/aggregated feature split (93 local and 72 aggregated features). Checked transaction ID uniqueness, missing feature values, edge endpoints, and cross-time-step edges. Generated a per-time-step illicit-share plot and summary CSV. Added and ran Day 1 tests; all **13 Day 1 tests passed**.
+- Day 2 — Complete: Implemented src/splits.py and configured chronological split windows in config.yaml. Added split-ordering, labelled-node filtering, configuration-validation, leakage, and expected-count tests. Verified split counts against the Day 1 diagnostics. Full test suite passed: 25 tests.
+
+
+Day 3 — Evaluation and model foundations
+Implemented evaluation metrics and model/feature-set utilities; tests cover metric calculations and model setup.
+
+
+
+Day 4 — RQ1 baseline comparison
+Ran LOCAL versus ALL feature baselines for Logistic Regression and Random Forest; recorded the E1 results and sanity checks.
+
+
+
+Day 5 — Temporal drift analysis
+Implemented drift metrics and plots, added tests, and documented per-time-step RQ1 results. Verify the edited numerical claims before calling the analysis final.
