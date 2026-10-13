@@ -18,8 +18,6 @@ data/raw/*.7z
 data/raw/*.rar
 
 # Generated results
-results/*.csv
-results/*.json
 results/*.pkl
 results/*.joblib
 

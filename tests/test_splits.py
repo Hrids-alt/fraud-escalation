@@ -125,7 +125,7 @@ def test_missing_required_column_raises_value_error():
     with pytest.raises(ValueError):
         make_splits(_toy_df().drop(columns=["time_step"]), CFG)
 
-
+@pytest.mark.slow
 def test_real_split_counts_match_day1():
     yaml = pytest.importorskip("yaml")
     config_path = ROOT / "config.yaml"

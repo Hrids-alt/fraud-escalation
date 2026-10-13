@@ -1,3 +1,19 @@
+# FraudFin
+
+FraudFin is a cost-aware, two-stage system for detecting illicit Bitcoin
+transactions using the Elliptic dataset.
+
+It compares local-only and graph-feature models and investigates whether
+selectively escalating uncertain transactions can reduce simulated
+computational cost while retaining illicit-transaction recall.
+
+## Rebuild Stage 1 calibration results
+
+From the repository root, run:
+
+```bash
+python scripts/e3_calibration.py
+
 ## Dataset and Attribution
 
 This project uses the Elliptic Bitcoin transaction dataset for academic experimentation in financial fraud detection.
