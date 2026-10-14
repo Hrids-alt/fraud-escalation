@@ -130,3 +130,35 @@ The “after” plots are in-sample (fitted on steps 29-34), so treat them as di
 LR is still poorly calibrated after sigmoid, so RF is the router. Steps 29-34 are 19.6% illicit and the test steps are 6.5%, so thresholds chosen on 29-34 may not transfer.
 
 **Base-rate / distribution-shift note:** The illicit share differs across the chronological windows: 10.08% in Stage 1 training (steps 1–28), 19.63% in calibration (steps 29–34), and approximately 6.50% in the final test window (steps 35–49). The calibration period is therefore not representative of the test period's class prevalence. Threshold selection and calibration results should be interpreted with this distribution shift in mind. We must report final performance on the untouched test window and avoid claiming that validation performance guarantees test performance.
+
+
+## Day 8: RQ2 test result (steps 35-49, evaluated once)
+
+Setup: Stage 1 (local features, steps 1-28) and its sigmoid calibrator were frozen on Day 6. `d = 0.39`, `d2 = 0.26` and `t_clear = 0.39` were frozen on Day 7 using steps 29-34 and a validation copy of Stage 2 (steps 1-28). Day 8 trains the final Stage 2 (ALL features, same RF family, same seed) on steps 1-34 and scores steps 35-49 once. No threshold was changed after seeing test data.
+
+| System | Precision | Recall | F1 | Recall retention |
+|---|---|---|---|---|
+| Local-only (p1 >= d) | 0.701 | 0.732 | 0.716 | 0.997 |
+| Graph-always (p2 >= d2) | 0.792 | 0.734 | 0.762 | 1.000 |
+| Cascade (frozen t_clear) | 0.894 | 0.720 | 0.798 | 0.981 |
+| Random escalation, same rate (mean of 5 seeds) | 0.704 | 0.733 | 0.718 | 0.998 |
+
+Retention = recall(system) / recall(graph-always).
+
+**Answer to RQ2.** The cascade keeps 98.1% of graph-always recall (target 95%) while sending only 6.8% of transactions to Stage 2. Under the simulated cost model (local = 1, graph = r, cascade = 1 + escalation_rate x r), the saving against graph-always is 77.7% at r = 5, 88.8% at r = 20 and 92.3% at r = 100. These costs are simulated, because the graph features are precomputed in this dataset.
+
+**Targeted versus random escalation.** At the same escalation rate, random escalation behaves like local-only (F1 0.718), while the cascade reaches F1 0.798 (precision 0.894). So the gain comes from choosing which transactions to escalate, not from escalating some of them.
+
+**Base-rate shift.** The test escalation rate (6.8%) is far lower than on validation (19.5%). This is consistent with the illicit share falling from 19.6% (steps 29-34) to 6.5% (steps 35-49). It is reported as observed, not corrected.
+
+**Cost-versus-recall curve (descriptive, not used to choose anything).** The cascade curve sweeps `t_clear` from 0 to `d` on the test steps. It reaches graph-always recall at roughly 12% escalation and stays flat after that. The frozen `t_clear = 0.39` is the cheapest point on the curve, with recall 0.720 against 0.734 for graph-always. The y-axis spans only about 0.720-0.734, so all recall differences here are about 1.4 percentage points or less. The random-escalation curve is almost flat because local-only recall (0.732) is already close to graph-always recall.
+
+**Per-step behaviour.** On steps 35-42 the cascade is equal to or above graph-always on most steps, with the largest gaps on steps 36 and 46. From step 43 onward every system collapses to F1 near 0, so this is a temporal-drift failure that the cascade does not fix (see the Day 5 drift analysis). The late steps have very few illicit examples, so the step 46 bump is a small-count effect and should not be over-read.
+
+### Limitations (report these)
+1. **Recall retention is a weak test on this split.** Local-only recall is already almost equal to graph-always recall, and the random control also retains about 99.8%. On test, the graph features add precision, not recall.
+2. **The F1 advantage over graph-always has a specific cause.** `d2 = 0.26` is a low threshold, so graph-always flags many false positives. The cascade removes those in the cleared region. This is not evidence that the cascade is a better model than Stage 2.
+3. **`d2` did not transfer well.** An earlier all-features baseline at threshold 0.5 reached precision 0.988, recall 0.696 and F1 0.816 on the same test steps. Both graph-always (F1 0.762) and the cascade (F1 0.798) are below that. This is consistent with thresholds chosen on a 19.6% illicit share not carrying over to a 6.5% share. `d2` was not retuned, because that would use test data.
+4. The final Stage 2 is trained on steps 1-34, but `d2` was chosen from a validation copy trained on steps 1-28. The two models differ slightly.
+5. One chronological split, one model family (RF) and one Stage 2 seed. Seed spread is added on Day 9.
+6. After step 43 the models fail for all systems, so overall test metrics are dominated by steps 35-42.
