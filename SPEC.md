@@ -71,8 +71,9 @@ A pytest test must fail if any training step is later than any validation or tes
 5. FREEZE Stage 1, the calibrator, `d` and `t_clear`.
 6. Train the final Stage 2 (ALL) on steps 1-34.
 7. Evaluate once on steps 35-49.
-d is chosen on Day 6 (max illicit F1 on steps 29-34, calibrated Stage 1 probabilities) and frozen with Stage 1.
-On Day 7 only t_clear is chosen, on steps 29-34, with t_clear ≤ d.
+
+`d` is chosen on Day 6 (max illicit F1 on steps 29-34, calibrated Stage 1 probabilities) and frozen with Stage 1. On Day 7, `d2` and `t_clear` are chosen on steps 29-34 (see "Stage 2 decision threshold" in Section 7), with `t_clear <= d`. All three are stored in `thresholds_<family>.json`.
+
 ## 7. Cascade and baselines
 
 Router: `p1 < t_clear` -> licit (cleared, no graph features); otherwise escalate to Stage 2, whose label is final.
@@ -95,6 +96,7 @@ Note for the report: the RQ1 local-only model (trained on 1-34) and the RQ2 loca
 - The recall-retention target is 0.95.
 - The Stage 1 clearing threshold must satisfy `t_clear <= d`, where `d` is already frozen from Day 6. Select `t_clear` on steps 29–34 only, choosing the largest value that achieves recall retention of at least 0.95. If none achieves the target, report the best achieved retention.
 - Do not use test steps 35–49 for threshold selection or retuning.
+
 ## 8. Metrics
 
 Illicit-class precision, recall, F1; PR-AUC (`average_precision_score`); per-time-step versions; `escalation_rate` = share of transactions with `p1 >= t_clear`; `recall_retention` = recall(cascade) / recall(graph-always).
@@ -131,55 +133,58 @@ fraud-escalation/
   SPEC.md
   README.md
   requirements.txt
-  config.yaml          # split steps, seeds, threshold grid, r values, recall target
+  pytest.ini           # registers the `slow` marker
+  config.yaml          # seed, split steps, threshold grid
+  thresholds_rf.json   # frozen d, d2, t_clear (Day 7). Do not edit.
+  run_baselines.py     # RQ1 baselines (--features local|all)
   data/raw/            # git-ignored
+  artifacts/           # git-ignored: frozen Stage 1 model and calibrator (.joblib)
   src/
     load_data.py       # load_features(), load_classes(), load_edges(), build_dataset()
     splits.py          # make_splits(df, cfg) -> dict of DataFrames; assert_chronological(splits)
-    models.py          # make_model(family, seed) ; fit(model, X, y)
-    calibration.py     # calibrate_sigmoid(model, X_val, y_val) ; brier(); reliability_data()
-    cascade.py         # route(p1, t_clear) ; run_cascade(...) ; random_control(...)
-    evaluate.py        # illicit_metrics(y, y_pred, y_score) ; per_step_metrics(...) ; relative_cost(...)
-  app/streamlit_app.py # one page: threshold slider, cost-vs-recall chart, drift chart
-  notebooks/           # 01_eda, 02_results
-  results/             # tables and figures (precomputed for the app)
-  tests/               # test_splits.py, test_cascade.py, test_metrics.py
-  docs/notes.md        # my own explanations, viva prep
+    models.py          # make_model(family, seed) ; feature_columns(df, feature_set)
+    calibration.py     # calibrate_sigmoid() ; brier() ; reliability_data() ; choose_d()
+    cascade.py         # route, run_cascade, local_only, graph_always, random_control, sweep_t_clear, choose_t_clear, load_stage1, load_thresholds
+    evaluate.py        # illicit_metrics ; per_step_metrics ; relative_cost ; cost_table
+    drift.py           # drift metrics and plots
+  scripts/
+    e2_drift.py            # Day 5: per-step drift for RQ1
+    e3_calibration.py      # Day 6: Stage 1 training, calibration, d
+    e4_thresholds.py       # Day 7: d2 and t_clear on steps 29-34 (writes thresholds_<family>.json)
+    e5_cascade_test.py     # Day 8: single evaluation on steps 35-49
+    e6_seed_spread.py      # Day 9: Stage 2 seed spread, thresholds unchanged
+    export_for_ui.py       # Day 9: results/ -> web/data/results.json
+  web/                 # static web app (Days 10-11); web/data/results.json is its only data source
+  results/             # tables, figures and predictions (committed)
+  tests/               # one test file per module and script
+  docs/notes.md        # my own explanations, results and viva prep
 ```
 
 ## 13. Conventions
 
-- Python 3.10+. pandas, numpy, scikit-learn, matplotlib, plotly, streamlit, pyyaml, pytest.
-- Pure functions on DataFrames/arrays; no hidden global state. Seeds and thresholds in `config.yaml`.
-- Commit after every working module. Tag `v1-rq1` after RQ1 and `v2-rq2` after RQ2.
+- Python 3.10+. pandas, numpy, scikit-learn, matplotlib, joblib, pyyaml, pytest (see `requirements.txt`). The web app is plain HTML/CSS/JavaScript with no backend.
+- Pure functions on DataFrames/arrays; no hidden global state. Seeds and split steps in `config.yaml`; frozen thresholds in `thresholds_<family>.json`.
+- `e4`, `e5` and `e6` refuse to overwrite their outputs without `--force`. This is intentional.
+- Commit after every working module. Tags: `v1-rq1` after RQ1, `v2-rq2` after RQ2, `v3-results` after Day 9.
 
 ## 14. Open items to verify on Day 1
 
-- [ ] Row counts and column counts match Section 3
-- [ ] Class value counts; raw `1` = illicit, raw `2` = licit
-- [ ] Split point between local and aggregated features
-- [ ] Edges stay within one time step
-- [ ] Illicit share per time step plotted
-- [ ] Dataset licence and terms read on the download page
+- [x] Row counts and column counts match Section 3
+- [x] Class value counts; raw `1` = illicit, raw `2` = licit
+- [ ] Split point between local and aggregated features: 93 local / 72 aggregated is taken from the dataset paper and cannot be verified from the headerless features file
+- [x] Edges stay within one time step
+- [x] Illicit share per time step plotted
+- [x] Dataset licence and terms read on the download page (CC BY-NC-ND 4.0)
 
 ## 15. Current status
 
-(update after every working module)
-
 - Day 0: dataset download started.
-- Day 1 — Complete:** Implemented `src/load_data.py` with `load_features()`, `load_classes()`, `load_edges()`, and `build_dataset()`. Verified dataset dimensions (203,769 transactions, 234,355 edges, and 167 columns in the raw feature file), class mapping (raw `1` = illicit, raw `2` = licit, `unknown` = unlabelled), and the local/aggregated feature split (93 local and 72 aggregated features). Checked transaction ID uniqueness, missing feature values, edge endpoints, and cross-time-step edges. Generated a per-time-step illicit-share plot and summary CSV. Added and ran Day 1 tests; all **13 Day 1 tests passed**.
-- Day 2 — Complete: Implemented src/splits.py and configured chronological split windows in config.yaml. Added split-ordering, labelled-node filtering, configuration-validation, leakage, and expected-count tests. Verified split counts against the Day 1 diagnostics. Full test suite passed: 25 tests.
-
-
-Day 3 — Evaluation and model foundations
-Implemented evaluation metrics and model/feature-set utilities; tests cover metric calculations and model setup.
-
-
-
-Day 4 — RQ1 baseline comparison
-Ran LOCAL versus ALL feature baselines for Logistic Regression and Random Forest; recorded the E1 results and sanity checks.
-
-
-
-Day 5 — Temporal drift analysis
-Implemented drift metrics and plots, added tests, and documented per-time-step RQ1 results. Verify the edited numerical claims before calling the analysis final.
+- Day 1, complete: `src/load_data.py` (`load_features`, `load_classes`, `load_edges`, `build_dataset`). Verified 203,769 transactions, 234,355 edges, 167 raw feature columns, class mapping (raw `1` = illicit, raw `2` = licit, `unknown` = unlabelled), unique ids, no missing feature values, no cross-time-step edges. The 93 local / 72 aggregated split is taken from the dataset paper; it is not verifiable from the file. 13 Day 1 tests passed.
+- Day 2, complete: `src/splits.py` and chronological windows in `config.yaml`; split-ordering, leakage and expected-count tests.
+- Days 3-4, complete: `src/evaluate.py`, `src/models.py`, `run_baselines.py`; RQ1 results for LR and RF, LOCAL vs ALL (E1), sanity checks.
+- Day 5, complete: per-time-step drift analysis (E2).
+- Day 6, complete: Stage 1 (LOCAL) trained on steps 1-28, sigmoid calibration on steps 29-34, `d` chosen. RF `d = 0.39`; LR `d = 0.50`. Artifacts stored locally in `artifacts/`.
+- Day 7, complete: `src/cascade.py`, `scripts/e4_thresholds.py`. RF thresholds frozen in `thresholds_rf.json`: `d = 0.39`, `d2 = 0.26`, `t_clear = 0.39`. LR thresholds not computed (optional, secondary).
+- Day 8, complete: `scripts/e5_cascade_test.py`. Cascade evaluated once on steps 35-49 (RF): recall retention 0.981 at 6.8% escalation; simulated savings 78% / 89% / 92% at r = 5 / 20 / 100. Tag `v2-rq2`.
+- Day 9, complete: `scripts/e6_seed_spread.py` (3 Stage 2 seeds; the result is stable), `scripts/export_for_ui.py` (`web/data/results.json`), README reproduce section, repository cleanup. Tag `v3-results`.
+- Next: Days 10-11 web app built from `web/data/results.json`; Days 12-14 understanding pass, report and buffer.
