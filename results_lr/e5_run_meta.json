@@ -1,0 +1,38 @@
+{
+  "family": "lr",
+  "seed": 42,
+  "random_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "thresholds": {
+    "d": 0.5,
+    "d2": 0.85,
+    "t_clear": 0.21
+  },
+  "thresholds_file": "thresholds_lr.json",
+  "thresholds_sha256": "7a39ca686e2466109f90870c2ab0682049794e6695e183a4bd308625b14729e2",
+  "stage1_trained_on_steps": [
+    1,
+    28
+  ],
+  "stage1_calibrated_on_steps": [
+    29,
+    34
+  ],
+  "stage2_final_trained_on_steps": [
+    1,
+    34
+  ],
+  "test_steps": [
+    35,
+    49
+  ],
+  "n_test": 16670,
+  "test_escalation_rate": 0.45932813437312536,
+  "validation_escalation_rate": 0.37742692553872415,
+  "note": "d2 was frozen on a validation copy of Stage 2 (steps 1-28); the final Stage 2 is trained on 1-34 and uses the same d2. Not retuned."
+}

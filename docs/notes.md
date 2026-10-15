@@ -209,3 +209,5 @@ The seed has very little effect: the cascade keeps 98.1-98.2% of graph-always re
 **Outputs.** `results/e6_seed_spread.csv` and `web/data/results.json` (the export read by the web app; every number in it comes from `results/`).
 
 **Dataset note.** The split of the 165 features into 93 local and 72 aggregated comes from the dataset paper. It could not be verified from the features file itself.
+
+LR was run as a secondary model and is not the primary reported result because its calibration was weaker.

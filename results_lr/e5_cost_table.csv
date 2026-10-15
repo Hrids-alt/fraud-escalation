@@ -1,0 +1,4 @@
+r,escalation_rate,graph_always_cost,cascade_cost,relative_savings,cascade_recall,recall_retention,random_recall_same_cost,note,family
+5,0.45932813437312536,6.0,3.2966406718656267,0.45055988802239555,0.6740535549399815,0.9905020352781546,0.7226223453370266,"simulated cost: graph features are precomputed, so cost is modelled",lr
+20,0.45932813437312536,21.0,10.186562687462507,0.5149255863113091,0.6740535549399815,0.9905020352781546,0.7226223453370266,"simulated cost: graph features are precomputed, so cost is modelled",lr
+100,0.45932813437312536,101.0,46.93281343731254,0.5353186788384897,0.6740535549399815,0.9905020352781546,0.7226223453370266,"simulated cost: graph features are precomputed, so cost is modelled",lr
