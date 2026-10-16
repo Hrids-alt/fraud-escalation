@@ -102,3 +102,7 @@ python scripts/export_for_ui.py
 The values should match the committed ones. Only `artifacts/` is missing from a fresh clone, so `e3_calibration.py` must be run once before anything else can use the frozen Stage 1.
 
 **Cost is simulated.** The graph features are precomputed in this dataset, so the cost saving is modelled (local = 1, graph = r times local), not measured.
+
+# Optional secondary: Logistic Regression (separate output folder, so RF results stay untouched)
+python scripts/e4_thresholds.py --family lr
+python scripts/e5_cascade_test.py --family lr --out results_lr

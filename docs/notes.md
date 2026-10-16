@@ -210,4 +210,22 @@ The seed has very little effect: the cascade keeps 98.1-98.2% of graph-always re
 
 **Dataset note.** The split of the 165 features into 93 local and 72 aggregated comes from the dataset paper. It could not be verified from the features file itself.
 
-LR was run as a secondary model and is not the primary reported result because its calibration was weaker.
+## Day 9 (optional): Logistic Regression secondary result
+
+The cascade was also run with Logistic Regression as the model family (Stage 1 LOCAL, Stage 2 ALL, same protocol as Random Forest). Thresholds were frozen on steps 29-34 before the test steps were scored: `d = 0.50` (Day 6), `d2 = 0.85` and `t_clear = 0.21` (`thresholds_lr.json`; validation escalation 37.7%, retention 0.951). The test steps 35-49 were evaluated once. Outputs are in `results_lr/`. LR is reported as a secondary result because it is poorly calibrated even after sigmoid scaling and because its absolute performance is low.
+
+| System (LR) | Precision | Recall | F1 | PR-AUC |
+|---|---|---|---|---|
+| Local-only (`p1 >= d`) | 0.253 | 0.762 | 0.380 | 0.186 |
+| Graph-always (`p2 >= d2`) | 0.246 | 0.681 | 0.362 | 0.291 |
+| Cascade | 0.272 | 0.674 | 0.388 | n/a |
+| Random escalation, same rate (mean of 5 seeds) | 0.250 | 0.723 | 0.371 | n/a |
+
+The cascade escalated 45.9% of test transactions (37.7% on validation) and kept 99.0% of graph-always recall. The simulated cost saving against graph-always is 45.1% at r = 5, 51.5% at r = 20 and 53.5% at r = 100 (simulated).
+
+**Interpretation and caveats.**
+1. LR is a weak detector on this dataset (F1 about 0.36-0.39 against 0.72-0.80 for Random Forest). The Random Forest result is the main finding.
+2. The recall-retention measure is not meaningful for LR: LR Stage 2 has lower recall than LR Stage 1 (0.681 against 0.762), so local-only scores 1.12 and random escalation 1.06 on retention. Graph features did not improve LR recall here.
+3. The cascade F1 (0.388) is above random escalation (0.371, std 0.001) and local-only (0.380), but the margins are small and the absolute level is low.
+4. The test escalation rate differs from validation, consistent with the base-rate shift (19.6% to 6.5% illicit).
+5. One Stage 2 seed only; no seed spread was run for LR.
